@@ -24,7 +24,11 @@ from whatsapp_client import extraer_mensaje, enviar_texto
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("app")
 
-WA_VERIFY_TOKEN = os.environ.get("WHATSAPP_VERIFY_TOKEN", "mrapolo_webhook_2026")
+WA_VERIFY_TOKEN  = os.environ.get("WHATSAPP_VERIFY_TOKEN", "mrapolo_webhook_2026")
+SALES_AGENT_URL  = os.environ.get("SALES_AGENT_WEBHOOK_URL", "https://mr-apolo-production.up.railway.app/webhook")
+
+# Prefijos que pertenecen al pipeline de contenido
+CONTENT_PREFIXES = ("✅", "❌", "✏️")
 
 # ─────────────────────────────────────────
 # SCHEDULER — Corre el pipeline diario
@@ -78,16 +82,42 @@ def verificar_webhook(
 
 @app.post("/webhook")
 async def recibir_mensaje(request: Request):
-    """Recibe mensajes de WhatsApp del usuario."""
+    """
+    Recibe todos los mensajes de WhatsApp.
+    - Si empieza con ✅, ❌ o ✏️ → lo procesa el pipeline de contenido.
+    - Cualquier otro mensaje → se reenvía al agente de ventas.
+    """
     data = await request.json()
+    body_bytes = await request.body()
     log.info(f"📩 Webhook recibido: {str(data)[:200]}")
 
     mensaje = extraer_mensaje(data)
+
     if mensaje:
-        log.info(f"💬 Mensaje del usuario: {mensaje}")
-        asyncio.create_task(procesar_respuesta(mensaje))
+        if mensaje.startswith(CONTENT_PREFIXES):
+            # Es una respuesta al pipeline de contenido
+            log.info(f"🎯 Mensaje de contenido capturado: {mensaje}")
+            asyncio.create_task(procesar_respuesta(mensaje))
+        else:
+            # Reenviar al agente de ventas
+            log.info(f"➡️  Reenviando al agente de ventas: {mensaje[:50]}")
+            asyncio.create_task(_reenviar_al_agente(data))
+    else:
+        # Sin texto (puede ser imagen, audio, etc.) → reenviar al agente
+        asyncio.create_task(_reenviar_al_agente(data))
 
     return {"status": "ok"}
+
+
+async def _reenviar_al_agente(data: dict):
+    """Reenvía el mensaje al agente de ventas de forma asíncrona."""
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            await client.post(SALES_AGENT_URL, json=data)
+            log.info("✅ Mensaje reenviado al agente de ventas")
+    except Exception as e:
+        log.error(f"❌ Error reenviando al agente de ventas: {e}")
 
 
 # ─────────────────────────────────────────
