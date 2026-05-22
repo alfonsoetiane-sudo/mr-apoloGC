@@ -141,8 +141,11 @@ def ver_estado(secret: str = ""):
     import json, os
     if not os.path.exists("estado_pipeline.json"):
         return {"status": "Sin pipeline activo hoy"}
-    with open("estado_pipeline.json") as f:
-        return json.load(f)
+    try:
+        with open("estado_pipeline.json") as f:
+            return json.load(f)
+    except Exception as e:
+        return {"status": "Error leyendo estado", "error": str(e)}
 
 
 if __name__ == "__main__":

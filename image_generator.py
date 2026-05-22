@@ -34,7 +34,7 @@ TENDENCIAS_FILE = "tendencias_competidores.json"
 ROTACION_FILE   = "rotacion_temas.json"
 
 openai_client    = OpenAI(api_key=OPENAI_KEY)
-anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_KEY)
+anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_KEY, max_retries=5)
 
 IMAGENES_DIR.mkdir(exist_ok=True)
 
