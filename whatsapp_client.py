@@ -5,7 +5,10 @@ Maneja el envío y recepción de mensajes via Meta WhatsApp Business API.
 """
 
 import os
+import logging
 import requests
+
+log = logging.getLogger("whatsapp")
 
 WA_TOKEN     = os.environ.get("WHATSAPP_TOKEN")       # Token de acceso de Meta
 WA_PHONE_ID  = os.environ.get("WHATSAPP_PHONE_ID")    # ID del número de WhatsApp Business
@@ -27,6 +30,7 @@ def enviar_texto(mensaje: str) -> dict:
         "text": {"body": mensaje}
     }
     resp = requests.post(BASE_URL, json=payload, headers=HEADERS, timeout=15)
+    log.info(f"📤 enviar_texto → status={resp.status_code} to={WA_TO} resp={resp.text[:200]}")
     resp.raise_for_status()
     return resp.json()
 
@@ -90,6 +94,7 @@ def enviar_imagen_desde_archivo(ruta_archivo: str, caption: str) -> dict:
         "image": {"id": media_id, "caption": caption}
     }
     resp = requests.post(BASE_URL, json=payload, headers=HEADERS, timeout=15)
+    log.info(f"📤 enviar_imagen → status={resp.status_code} to={WA_TO} resp={resp.text[:200]}")
     resp.raise_for_status()
     return resp.json()
 
