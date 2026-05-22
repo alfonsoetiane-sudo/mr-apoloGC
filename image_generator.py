@@ -213,7 +213,7 @@ def cargar_tendencias() -> dict:
 # GENERAR PROMPT PARA DALL-E
 # ─────────────────────────────────────────
 
-def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False, feedback_extra: str = None) -> str:
+def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False, feedback_extra: str = None, estilo: str = "cartoon") -> str:
     """Claude genera el prompt optimizado para gpt-image-1 basado en el tema y tendencias."""
     from mr_apolo_brand import INGREDIENTES_RECETAS
 
@@ -240,17 +240,18 @@ Logo oficial Mr. Apolo (descripción exacta, replicar fielmente):
 Descripción exacta del empaque (si el producto aparece en la imagen):
 {DESCRIPCION_EMPAQUE.get('olimpico', '')}
 
+{"ESTILO DEL POST: INFOGRAFÍA CARTOON EDUCATIVA" if estilo == "cartoon" else "ESTILO DEL POST: INFOGRAFÍA FOTORREALISTA PREMIUM"}
+
 REGLAS CRÍTICAS para el prompt:
-0. Estilo ilustración CARTOON EDUCATIVO, semi-realista — igual al logo oficial. NO fotorrealista. El perro siempre es negro con pecho blanco y lengua afuera.
-1. Layout MITAD Y MITAD: mitad izquierda ilustración cartoon educativa del tema, mitad derecha texto informativo con título en dorado y puntos en blanco sobre fondo negro.
-2. Los ingredientes visibles deben ser SOLO: pollo fresco, zanahoria, espinaca, calabacita. Nunca otros.
-3. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
-4. {"Si hay imagen de referencia: mantener exactamente el mismo layout. Solo cambiar branding y contenido a Mr. Apolo." if con_referencia else "Describir la composición visual en detalle (qué va en cada mitad)."}
-5. Colores: fondo #1C1C1C, títulos #C9A84C dorado, texto blanco.
-6. Logo Mr. Apolo (círculo dorado con perro cartoon) visible en esquina, pequeño.
-7. Formato cuadrado 1:1 para Instagram.
-8. Máximo 900 caracteres.
-9. Incluir al final: "All visible text in the image must be in Spanish only, not English. Cartoon illustration style, educational infographic."
+{"0. Estilo CARTOON EDUCATIVO completo — toda la imagen es una ilustración. Igual al estilo del logo oficial Mr. Apolo: semi-realista, no infantil. Perro negro con pecho blanco y lengua afuera cuando aparezca. Ingredientes como elementos ilustrados. Texto educativo integrado en la ilustración con tipografía bold en dorado y blanco." if estilo == "cartoon" else "0. Estilo FOTORREALISTA premium — toda la imagen es tipo fotografía editorial de alta calidad. Ingredientes frescos reales en primer plano, iluminación de estudio profesional, fondos limpios. El logo Mr. Apolo aparece como overlay en esquina. Texto informativo superpuesto con tipografía bold."}
+1. Los ingredientes visibles deben ser SOLO: pollo fresco, zanahoria, espinaca, calabacita. Nunca otros.
+2. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
+3. {"Si hay imagen de referencia: mantener layout y composición. Solo cambiar branding a Mr. Apolo." if con_referencia else "Describir la composición visual completa de la infografía."}
+4. Colores: fondo #1C1C1C, títulos #C9A84C dorado, texto blanco.
+5. Logo Mr. Apolo (círculo dorado con perro cartoon) visible en esquina inferior, pequeño pero legible.
+6. Formato cuadrado 1:1 para Instagram.
+7. Máximo 900 caracteres.
+8. Incluir al final: "All visible text in the image must be in Spanish only, not English."
 
 Responde SOLO con el prompt en inglés, sin explicaciones."""
 

@@ -110,12 +110,16 @@ async def ejecutar_pipeline():
         posts_dia = seleccionar_temas_del_dia()
 
         # 3. Generar imágenes y captions para los 2 posts
+        # Post 1 siempre cartoon educativo, Post 2 fotorrealista premium
+        ESTILOS_DIA = ["cartoon", "realista"]
         posts_generados = []
         for i, (tema, tipo, horario) in enumerate(posts_dia, 1):
             log.info(f"🎨 Generando post {i}: {tema}")
+            estilo = ESTILOS_DIA[(i - 1) % len(ESTILOS_DIA)]
+            log.info(f"🎨 Estilo: {estilo}")
 
             # Imagen
-            prompt = generar_prompt_dalle(tema, tipo, tendencias or {})
+            prompt = generar_prompt_dalle(tema, tipo, tendencias or {}, estilo=estilo)
             fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             nombre = f"mrapolo_post{i}_{tipo}_{fecha_str}.png"
             Path("imagenes_generadas").mkdir(exist_ok=True)
