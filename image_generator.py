@@ -213,18 +213,23 @@ def cargar_tendencias() -> dict:
 # GENERAR PROMPT PARA DALL-E
 # ─────────────────────────────────────────
 
-def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False) -> str:
+def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False, feedback_extra: str = None) -> str:
     """Claude genera el prompt optimizado para gpt-image-1 basado en el tema y tendencias."""
+    from mr_apolo_brand import INGREDIENTES_RECETAS
 
     tendencias_str = json.dumps(tendencias, ensure_ascii=False) if tendencias else "Sin tendencias previas"
+    ingredientes_str = ", ".join(INGREDIENTES_RECETAS["comunes"])
 
     modo = "ADAPTAR la imagen de referencia del competidor" if con_referencia else "CREAR una infografía de Instagram"
+
+    feedback_str = f"\nFEEDBACK DEL USUARIO (CORRIGE ESTO en la nueva versión): {feedback_extra}" if feedback_extra else ""
 
     instruccion = f"""Genera un prompt detallado en inglés para gpt-image-1 que sirva para {modo} para Mr. Apolo.
 
 Tema: {tema}
 Tipo de infografía: {tipo_infografia} — {TIPOS_INFOGRAFIA.get(tipo_infografia, '')}
-Tendencias detectadas en competidores: {tendencias_str}
+Ingredientes reales del producto (úsalos como elementos visuales): {ingredientes_str}
+Tendencias detectadas en competidores: {tendencias_str}{feedback_str}
 
 Estilo visual de la marca:
 {BRAND_STYLE}
@@ -235,6 +240,7 @@ Descripción exacta del empaque Mr. Apolo (úsala si el producto debe aparecer e
 {DESCRIPCION_EMPAQUE}
 
 REGLAS CRÍTICAS para el prompt:
+0. Los elementos visuales deben mostrar los ingredientes reales del producto: pollo fresco, zanahoria, calabacita, espinaca, hígado. Nunca inventar ingredientes.
 1. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
 2. {"Si hay imagen de referencia: mantener exactamente el mismo layout, estructura y composición del competidor. Solo cambiar branding, colores y contenido a Mr. Apolo." if con_referencia else "Describir la composición visual en detalle (qué va arriba, al centro, abajo)."}
 3. Colores Mr. Apolo: fondo oscuro #1C1C1C, acentos dorados #C9A84C, texto blanco.
@@ -319,11 +325,21 @@ def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = No
 # GENERAR CAPTION PARA LA INFOGRAFÍA
 # ─────────────────────────────────────────
 
-def generar_caption_infografia(tema: str, tipo_infografia: str) -> dict:
+def generar_caption_infografia(tema: str, tipo_infografia: str, feedback_extra: str = None) -> dict:
     """Genera el caption de Instagram que acompaña la infografía."""
     from content_generator import generar_contenido
+    from mr_apolo_brand import INGREDIENTES_RECETAS
 
-    contexto = f"Este post es una infografía tipo '{tipo_infografia}'. El texto debe complementar la imagen visual, no repetir lo que ya se ve en ella. Ser más corto de lo normal ya que la imagen ya comunica mucho."
+    ingredientes_str = ", ".join(INGREDIENTES_RECETAS["comunes"])
+    contexto = (
+        f"Este post es una infografía tipo '{tipo_infografia}'. "
+        f"El texto debe complementar la imagen visual, no repetir lo que ya se ve en ella. "
+        f"Ser más corto de lo normal ya que la imagen ya comunica mucho. "
+        f"Ingredientes reales del producto (solo menciona estos): {ingredientes_str}."
+    )
+    if feedback_extra:
+        contexto += f" IMPORTANTE: el usuario rechazó la versión anterior porque '{feedback_extra}'. Corrígelo en esta nueva versión."
+
     return generar_contenido(tema, contexto_extra=contexto)
 
 

@@ -209,12 +209,14 @@ async def procesar_respuesta(mensaje: str):
         confirmacion = f"✅ Post {post['numero']} publicado en Instagram."
 
     elif mensaje.startswith("❌"):
-        # Rechazar
+        # Rechazar → regenerar inmediatamente con el feedback
         motivo = mensaje.replace("❌", "").strip()
-        log.info(f"❌ Post {post['numero']} rechazado: {motivo}")
+        log.info(f"❌ Post {post['numero']} rechazado: {motivo}. Regenerando...")
         guardar_feedback_pipeline(post["tema"], post["caption"], "rechazado", motivo)
         actualizar_estado_post(idx, "rechazado", motivo)
-        confirmacion = f"❌ Feedback guardado. Claude aprenderá para mañana."
+        enviar_texto(f"❌ Entendido: {motivo}\n\n🔄 Regenerando el post con tu feedback...")
+        await _regenerar_post(post, idx, motivo)
+        return
 
     elif mensaje.startswith("✏️"):
         # Caption personalizado
@@ -241,6 +243,45 @@ async def procesar_respuesta(mensaje: str):
     else:
         # Terminamos el día
         enviar_texto(confirmacion + "\n\n¡Listo el día! 🐾 Mañana a las 7am te mando los siguientes.")
+
+
+async def _regenerar_post(post: dict, idx: int, motivo: str):
+    """Regenera un post rechazado usando el feedback del usuario."""
+    try:
+        tendencias = cargar_tendencias()
+        tema = post["tema"]
+        tipo = post["tipo"]
+
+        # Generar nueva imagen con contexto del rechazo
+        prompt = generar_prompt_dalle(tema, tipo, tendencias or {}, feedback_extra=motivo)
+        fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        nombre = f"mrapolo_regen{post['numero']}_{tipo}_{fecha_str}.png"
+        Path("imagenes_generadas").mkdir(exist_ok=True)
+        ruta_img, _ = generar_imagen(prompt, nombre)
+
+        # Generar nuevo caption con contexto del rechazo
+        caption_data = generar_caption_infografia(tema, tipo, feedback_extra=motivo)
+        caption_data["horario_sugerido"] = post.get("horario", "")
+
+        # Actualizar el post en el estado
+        estado = cargar_estado()
+        estado["posts"][idx].update({
+            "caption": caption_data.get("caption", ""),
+            "hashtags": caption_data.get("hashtags", []),
+            "ruta_imagen": ruta_img,
+            "resultado": None,
+        })
+        estado["post_actual"] = idx  # Volver al mismo post
+        with open(ESTADO_FILE, "w", encoding="utf-8") as f:
+            json.dump(estado, f, ensure_ascii=False, indent=2)
+
+        # Enviar el post regenerado
+        await enviar_post_whatsapp(estado["posts"][idx])
+        log.info(f"🔄 Post {post['numero']} regenerado y enviado")
+
+    except Exception as e:
+        log.error(f"❌ Error regenerando post: {e}")
+        enviar_texto(f"❌ Error al regenerar: {str(e)[:100]}\nIntenta de nuevo con ❌ + motivo.")
 
 
 def _publicar_en_instagram(post: dict):
