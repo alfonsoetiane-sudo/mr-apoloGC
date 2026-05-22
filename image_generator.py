@@ -22,7 +22,7 @@ import requests
 import anthropic
 from openai import OpenAI
 from pathlib import Path
-from mr_apolo_brand import BRAND_COLORS, BRAND_STYLE, BRAND_SYSTEM_PROMPT, DESCRIPCION_EMPAQUE
+from mr_apolo_brand import BRAND_COLORS, BRAND_STYLE, BRAND_SYSTEM_PROMPT, DESCRIPCION_EMPAQUE, LOGO_DESCRIPCION
 
 # ─────────────────────────────────────────
 # CONFIGURACIÓN
@@ -234,21 +234,23 @@ Tendencias detectadas en competidores: {tendencias_str}{feedback_str}
 Estilo visual de la marca:
 {BRAND_STYLE}
 
-Colores: fondo {BRAND_COLORS['negro_fondo']}, acentos dorados {BRAND_COLORS['dorado']}, texto {BRAND_COLORS['blanco']}
+Logo oficial Mr. Apolo (descripción exacta, replicar fielmente):
+{LOGO_DESCRIPCION}
 
-Descripción exacta del empaque Mr. Apolo (úsala si el producto debe aparecer en la imagen):
-{DESCRIPCION_EMPAQUE}
+Descripción exacta del empaque (si el producto aparece en la imagen):
+{DESCRIPCION_EMPAQUE.get('olimpico', '')}
 
 REGLAS CRÍTICAS para el prompt:
-0. Los elementos visuales deben mostrar los ingredientes reales del producto: pollo fresco, zanahoria, calabacita, espinaca, hígado. Nunca inventar ingredientes.
-1. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
-2. {"Si hay imagen de referencia: mantener exactamente el mismo layout, estructura y composición del competidor. Solo cambiar branding, colores y contenido a Mr. Apolo." if con_referencia else "Describir la composición visual en detalle (qué va arriba, al centro, abajo)."}
-3. Colores Mr. Apolo: fondo oscuro #1C1C1C, acentos dorados #C9A84C, texto blanco.
-4. Si aparece el producto Mr. Apolo, usar esta descripción exacta del empaque: bolsa transparente sellada al vacío con etiqueta negra cuadrada, logo circular del perro negro con pecho blanco y lengua afuera rodeado de ingredientes frescos, texto 'MR APOLO' en dorado arriba, 'Comida de campeones, al alcance de todos.' en dorado abajo.
-5. Eliminar cualquier branding del competidor. Reemplazar con Mr. Apolo.
-6. Formato cuadrado 1:1 para Instagram.
-7. Máximo 900 caracteres.
-8. Incluir: "All visible text in the image must be in Spanish only, not English."
+0. Estilo ilustración CARTOON EDUCATIVO, semi-realista — igual al logo oficial. NO fotorrealista. El perro siempre es negro con pecho blanco y lengua afuera.
+1. Layout MITAD Y MITAD: mitad izquierda ilustración cartoon educativa del tema, mitad derecha texto informativo con título en dorado y puntos en blanco sobre fondo negro.
+2. Los ingredientes visibles deben ser SOLO: pollo fresco, zanahoria, espinaca, calabacita. Nunca otros.
+3. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
+4. {"Si hay imagen de referencia: mantener exactamente el mismo layout. Solo cambiar branding y contenido a Mr. Apolo." if con_referencia else "Describir la composición visual en detalle (qué va en cada mitad)."}
+5. Colores: fondo #1C1C1C, títulos #C9A84C dorado, texto blanco.
+6. Logo Mr. Apolo (círculo dorado con perro cartoon) visible en esquina, pequeño.
+7. Formato cuadrado 1:1 para Instagram.
+8. Máximo 900 caracteres.
+9. Incluir al final: "All visible text in the image must be in Spanish only, not English. Cartoon illustration style, educational infographic."
 
 Responde SOLO con el prompt en inglés, sin explicaciones."""
 

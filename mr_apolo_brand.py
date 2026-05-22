@@ -16,7 +16,6 @@ INGREDIENTES_RECETAS = {
         "pollo fresco desmenuzado",
         "zanahoria en cubos",
         "calabacita en cubos",
-        "hígado de res",
         "arroz integral",
     ],
     "comunes": [
@@ -25,7 +24,6 @@ INGREDIENTES_RECETAS = {
         "calabacita",
         "arroz integral",
         "espinaca",
-        "hígado de res",
     ]
 }
 
@@ -103,40 +101,55 @@ BRAND_COLORS = {
     "crema":        "#F5F0E8",   # Texto secundario suave
 }
 
-BRAND_STYLE = """Estilo visual Mr. Apolo (basado en www.mrapolo.com):
+BRAND_STYLE = """Estilo visual Mr. Apolo:
 - Fondo oscuro (#1C1C1C o #0A0A0A), estética premium y oscura
 - Acentos y títulos en dorado (#C9A84C)
 - Tipografía bold, grande, impactante — estilo editorial
-- Ingredientes frescos reales visibles: pollo, zanahoria, espinaca, carne
-- Mascota: perro negro con pecho blanco, lengua afuera, expresivo y feliz
-- Sobres del producto como elemento visual cuando aplique
+- Ingredientes frescos reales visibles: pollo, zanahoria, espinaca, calabacita
+- Mascota: perro negro con pecho blanco, lengua afuera, expresivo y feliz — estilo CARTOON REALISTA igual que el logo
+- Logo oficial siempre presente: círculo dorado, perro cartoon, 'MR APOLO' en dorado, tagline curvo en dorado
+- Estilo ilustración: cartoon educativo con detalles semi-realistas (no fotorrealista, no demasiado infantil)
 - Sin filtros excesivos. Limpio, apetitoso, directo.
 - Composición ordenada con jerarquía visual clara
-- Estilo: entre premium mexicano y marca de athleisure — serio pero accesible
-- Tagline disponible: 'Comida de campeones, al alcance de todos.'"""
+- Tagline disponible: 'Comida de campeones, al alcance de todos.'
+
+## Estilo infografía educativa MITAD Y MITAD (usar para posts educativos):
+Divide la imagen cuadrada en DOS mitades verticales o con forma orgánica:
+- MITAD IZQUIERDA: ilustración cartoon del concepto (ej: el perro feliz comiendo, ingredientes animados, iconos educativos estilo cartoon)
+- MITAD DERECHA: texto educativo con título bold dorado, puntos clave en blanco, fondo negro
+- Logo Mr. Apolo en esquina inferior, pequeño pero visible
+- Paleta: negro fondo, dorado para títulos, blanco para texto, acentos del color del ingrediente destacado"""
 
 # ─────────────────────────────────────────
 # DESCRIPCIÓN EXACTA DEL EMPAQUE (Sobre Olímpico)
 # Usar esta descripción en prompts de imagen para que la IA lo replique
 # ─────────────────────────────────────────
+LOGO_DESCRIPCION = """Logo circular oficial de Mr. Apolo (úsalo exactamente así):
+- Fondo circular negro oscuro (#0A0A0A) con borde circular dorado (#C9A84C)
+- Texto 'MR APOLO' en letras bold doradas en la parte superior del círculo, tipografía sans-serif impactante
+- Al centro: ilustración estilo cartoon realista de un perro negro con pecho blanco, lengua afuera lamiéndose, expresión feliz y energética
+- Rodeando al perro dentro del círculo: zanahorias naranjas, hojas de espinaca verde, calabacita
+- Texto curvo en dorado en la parte inferior del círculo: 'comida de campeones, al alcance de todos.'
+- En la base (fuera del círculo) texto blanco pequeño: www.mrapolo.com | @mr.apolo_petfood | @mcapolo.pet.food"""
+
 DESCRIPCION_EMPAQUE = {
     "olimpico": """Bolsa transparente de plástico sellada al vacío.
-A través de la bolsa se ve la comida fresca: mezcla rústica en tonos café, naranja y verde oscuro.
-Etiqueta cuadrada negra (#0A0A0A) al centro con:
-  - 'MR APOLO' en letras grandes doradas (#C9A84C) arriba
-  - Logo circular: perro negro con pecho blanco y lengua afuera, rodeado de zanahorias, verduras y carne cruda, borde dorado
-  - 'Comida de campeones, al alcance de todos.' en dorado curvo abajo del círculo
-  - www.mrapolo.com y redes sociales en texto blanco pequeño en la base
-Bolsa sobre madera rústica, fondo beige/crema neutro.""",
+A través de la bolsa se ve la comida fresca: mezcla rústica en tonos café, naranja y verde oscuro (pollo, zanahoria, espinaca).
+Etiqueta cuadrada negra (#0A0A0A) al centro con el logo oficial Mr. Apolo:
+  - Círculo dorado con 'MR APOLO' arriba en dorado bold
+  - Perro negro con pecho blanco, lengua afuera, estilo cartoon realista
+  - Rodeado de zanahorias y espinaca dentro del círculo
+  - 'comida de campeones, al alcance de todos.' curvo en dorado abajo
+Bolsa sobre superficie oscura, fondo negro premium.""",
 
     "titan": """Bolsa transparente de plástico sellada al vacío.
-A través de la bolsa se ve la comida fresca: mezcla con trozos visibles de pollo desmenuzado, zanahoria naranja, calabacita verde en cubos, en caldo claro.
-Etiqueta cuadrada negra (#0A0A0A) al centro con:
-  - 'MR APOLO' en letras grandes doradas (#C9A84C) arriba
-  - Logo circular: perro negro con pecho blanco y lengua afuera, rodeado de zanahorias, calabacita y trozos de pollo, borde dorado
-  - 'Comida de campeones, al alcance de todos.' en dorado curvo abajo del círculo
-  - www.mrapole.com y redes sociales en texto blanco pequeño en la base
-Bolsa sobre tabla de madera de cocina, con zanahorias y romero frescos al lado derecho, cocina de fondo desenfocada."""
+A través de la bolsa se ve la comida fresca: trozos visibles de pollo desmenuzado, zanahoria naranja, calabacita verde en cubos.
+Etiqueta cuadrada negra (#0A0A0A) al centro con el logo oficial Mr. Apolo:
+  - Círculo dorado con 'MR APOLO' arriba en dorado bold
+  - Perro negro con pecho blanco, lengua afuera, estilo cartoon realista
+  - Rodeado de zanahorias y calabacita dentro del círculo
+  - 'comida de campeones, al alcance de todos.' curvo en dorado abajo
+Bolsa sobre tabla de madera de cocina, ingredientes frescos al lado."""
 }
 
 BRAND_WEBSITE = "https://www.mrapolo.com"
