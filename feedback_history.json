@@ -1,0 +1,68 @@
+[
+  {
+    "fecha": "2026-05-14T13:45:23.778665",
+    "tipo": "rechazado",
+    "comentario": "Prohibido usar guiones (-) en el texto, hacen el contenido ver artificial. Usar punto, coma o salto de línea en su lugar. Ademas Instagram solamente te permite usar 5 hashtags",
+    "caption_generado": "¿Sabías que el pollo fresco puede cambiarle la vida a tu perro? 🐔\n\nNo exageramos. Cuando tu peludo come pollo real —sin procesar, sin conservadores, sin ingredientes que no puedes ni pronunciar— su cuerpo lo nota desde la primera semana.\n\nEstos son algunos cambios que notan nuestros clientes:\n\n✅ Más energía en sus paseos\n✅ Pelo más brillante y suave\n✅ Mejor digestión (sí, eso también importa)\n✅ Músculos más fuertes gracias a la proteína de alta calidad\n\nEl pollo fresco tiene aminoácidos esenciales que el organismo de tu perro aprovecha al máximo, algo que los ingredientes ultra procesados simplemente no pueden igualar.\n\nEn Mr. Apolo usamos pollo fresco de verdad, preparado con amor y sin atajos. Porque tu compañero se merece comer bien todos los días, no solo de vez en cuando. 🐾\n\n¿Quieres ver el cambio con tus propios ojos? Escríbenos por DM y te contamos cómo empezar.",
+    "hashtags_generados": [
+      "#MrApolo",
+      "#ComidaFrescaPerros",
+      "#AlimentoNaturalPerros",
+      "#PerrosSaludables",
+      "#AlimentoFrescoPerros",
+      "#CDMX",
+      "#PolloFrescoParaPerros",
+      "#SaludCanina",
+      "#PerrosFelices",
+      "#NutricionCanina"
+    ]
+  },
+  {
+    "fecha": "2026-05-14T13:47:51.040586",
+    "tipo": "aprobado",
+    "comentario": "",
+    "caption_generado": "¿Sabías que el pollo fresco puede cambiarle la vida a tu perro? 🐔\n\nNo exageramos. Cuando tu peludo come pollo real, sin conservadores ni rellenos artificiales, su cuerpo lo nota desde la primera semana.\n\nEsto es lo que empieza a pasar:\n\n🐾 Su pelaje se ve más brillante y suave. El pollo fresco es rico en proteína de alta calidad y ácidos grasos que nutren desde adentro.\n\n💪 Desarrolla músculo de verdad. No volumen vacío, sino masa muscular magra que le da energía real para jugar, correr y vivir bien.\n\n🫶 Su digestión mejora notablemente. Sin ingredientes que su cuerpo no reconoce, su sistema digestivo trabaja con menos esfuerzo y más eficiencia.\n\nEn Mr. Apolo usamos pollo fresco de verdad, el tipo de ingrediente que tú mismo reconocerías en tu cocina.\n\nSi quieres verlo con tus propios ojos, escríbenos por DM o entra al link de nuestra bio y pide tu primera entrega. 🐶",
+    "hashtags_generados": [
+      "#MrApolo",
+      "#ComidaFrescaPerros",
+      "#AlimentoNaturalPerros",
+      "#PerrosSaludables",
+      "#CDMX"
+    ]
+  },
+  {
+    "fecha": "2026-05-14T00:10:00",
+    "tipo": "rechazado",
+    "comentario": "No sonar como IA. El texto debe sonar como una persona real que ama a los perros, no como copy de marketing. Sin frases como 'No exageramos', 'Hablamos en serio', 'Y punto'.",
+    "caption_generado": "",
+    "hashtags_generados": []
+  },
+  {
+    "fecha": "2026-05-14T00:11:00",
+    "tipo": "rechazado",
+    "comentario": "Máximo 5 hashtags por post. Instagram penaliza el exceso de hashtags y reduce el alcance orgánico.",
+    "caption_generado": "",
+    "hashtags_generados": []
+  },
+  {
+    "fecha": "2026-05-14T00:12:00",
+    "tipo": "rechazado",
+    "comentario": "Prohibido usar guion (-) en cualquier parte del texto. Es el símbolo más asociado a contenido generado por IA.",
+    "caption_generado": "",
+    "hashtags_generados": []
+  },
+  {
+    "fecha": "2026-05-14T00:13:00",
+    "tipo": "aprobado",
+    "comentario": "La descripción visual accionable es muy útil: especificar fondo, tipo de recipiente, iluminación, posición del perro. Siempre incluirla con ese nivel de detalle.",
+    "caption_generado": "",
+    "hashtags_generados": []
+  },
+  {
+    "fecha": "2026-05-14T00:14:00",
+    "tipo": "aprobado",
+    "comentario": "El cierre con invitación a DM funciona bien. Mantenerlo como CTA principal. Evitar CTAs que suenen a anuncio pagado.",
+    "caption_generado": "",
+    "hashtags_generados": []
+  }
+]
