@@ -322,7 +322,7 @@ def _guardar_respuesta_openai(response, ruta: Path, prompt: str) -> tuple[str, s
     return str(ruta), prompt_revisado
 
 
-def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = None) -> tuple[str, str]:
+def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = None, es_producto: bool = False) -> tuple[str, str]:
     """
     Genera o adapta una imagen con gpt-image-1.
     Si se proporciona imagen_referencia (ruta local de post de competidor),
@@ -358,8 +358,7 @@ def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = No
 
     print(f"✅ Imagen guardada: {ruta}")
     ruta_str, prompt_rev = _guardar_respuesta_openai(response, ruta, prompt)
-    # Añadir watermark de texto con Pillow (evita logos falsos de la IA)
-    agregar_watermark(ruta_str)
+    agregar_watermark(ruta_str, usar_logo=es_producto)
     return ruta_str, prompt_rev
 
 
@@ -370,15 +369,11 @@ def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = No
 LOGO_FILE = "mr_apolo_logo.png"   # etiqueta oficial Mr. Apolo
 LOGO_SIZE_RATIO = 0.22            # el logo ocupa 22% del ancho de la imagen
 
-def agregar_watermark(ruta_imagen: str):
+def agregar_watermark(ruta_imagen: str, usar_logo: bool = False):
     """
-    Si existe mr_apolo_logo.jpg en la raíz del repo, lo pega en la esquina
-    inferior derecha de la imagen generada.
-    Si no existe, cae back a texto '@mr.apolo_petfood' en dorado.
-
-    Para activar el logo real:
-      1. Guarda la etiqueta como 'mr_apolo_logo.jpg' en la raíz del repo
-      2. Haz commit y push — Railway lo incluirá automáticamente
+    usar_logo=True  → pega mr_apolo_logo.png CENTRADO en la imagen (simula
+                      la etiqueta pegada al centro del sobre generado por IA).
+    usar_logo=False → pone '@mr.apolo_petfood' en dorado en la esquina inferior.
     """
     try:
         from PIL import Image, ImageDraw, ImageFont
@@ -386,18 +381,18 @@ def agregar_watermark(ruta_imagen: str):
         w, h = img.size
         margin = w // 40
 
-        if os.path.exists(LOGO_FILE):
-            # ── Overlay de imagen real ──────────────────────────────
+        if usar_logo and os.path.exists(LOGO_FILE):
+            # ── Etiqueta centrada sobre el sobre (imagen de producto) ──
             logo = Image.open(LOGO_FILE).convert("RGBA")
-            logo_w = int(w * LOGO_SIZE_RATIO)
+            # Ocupa ~45% del ancho — tamaño natural de una etiqueta en un sobre
+            logo_w = int(w * 0.45)
             logo_h = int(logo.height * logo_w / logo.width)
             logo = logo.resize((logo_w, logo_h), Image.LANCZOS)
 
-            # Posición: esquina inferior derecha
-            x = w - logo_w - margin
-            y = h - logo_h - margin
+            # Centro horizontal, ligeramente por debajo del centro vertical
+            x = (w - logo_w) // 2
+            y = (h - logo_h) // 2 + int(h * 0.05)
 
-            # Pegar con leve transparencia (90% opaco)
             logo_semi = logo.copy()
             alpha = logo_semi.split()[3]
             alpha = alpha.point(lambda p: int(p * 0.90))
@@ -405,10 +400,10 @@ def agregar_watermark(ruta_imagen: str):
 
             img.paste(logo_semi, (x, y), logo_semi)
             img.convert("RGB").save(ruta_imagen, "PNG")
-            print(f"✅ Logo overlay añadido desde {LOGO_FILE}")
+            print(f"✅ Etiqueta añadida (imagen de producto)")
 
         else:
-            # ── Fallback: texto en dorado ───────────────────────────
+            # ── Texto @mr.apolo_petfood para infografías y demás ─────
             overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
             draw = ImageDraw.Draw(overlay)
             texto = "@mr.apolo_petfood"
