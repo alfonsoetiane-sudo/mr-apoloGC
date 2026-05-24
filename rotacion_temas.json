@@ -1,0 +1,41 @@
+{
+  "categorias_usadas": [
+    "educacion",
+    "ingredientes",
+    "mitos",
+    "beneficios_visibles",
+    "comparacion",
+    "transicion"
+  ],
+  "temas_usados": {
+    "educacion": [
+      "por qué las proteínas animales son esenciales para los perros",
+      "cuánta agua necesita tu perro al día"
+    ],
+    "ingredientes": [
+      "pollo fresco: el rey de la proteína canina",
+      "zanahoria: beneficios para la vista de tu perro"
+    ],
+    "mitos": [
+      "mito: los perros pueden comer cualquier cosa",
+      "mito: la comida casera es peligrosa para los perros"
+    ],
+    "beneficios_visibles": [
+      "pelo más brillante en 3 semanas con comida fresca",
+      "más energía y menos letargo al cambiar de alimento"
+    ],
+    "comparacion": [
+      "comida fresca vs croquetas: lo que el empaque no te dice",
+      "ingredientes que reconoces vs ingredientes que no puedes pronunciar"
+    ],
+    "transicion": [
+      "cómo cambiar a tu perro de croquetas a comida fresca en 7 días",
+      "señales de que tu perro está listo para comida fresca"
+    ]
+  },
+  "ultima_fecha": "2026-05-15T17:09:27.971940",
+  "posts_hoy": [
+    "ingredientes que reconoces vs ingredientes que no puedes pronunciar",
+    "señales de que tu perro está listo para comida fresca"
+  ]
+}

@@ -18,7 +18,7 @@ from fastapi import FastAPI, Request, HTTPException
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from pipeline import ejecutar_pipeline, procesar_respuesta
+from pipeline import ejecutar_pipeline, procesar_respuesta, enviar_post2_tarde
 from whatsapp_client import extraer_mensaje, enviar_texto
 
 logging.basicConfig(level=logging.INFO)
@@ -38,15 +38,22 @@ scheduler = AsyncIOScheduler(timezone="America/Mexico_City")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Iniciar scheduler al arrancar el servidor
+    # Job 1: genera ambos posts y envía Post 1 a las 7am
     scheduler.add_job(
         ejecutar_pipeline,
         CronTrigger(hour=7, minute=0, timezone="America/Mexico_City"),
-        id="pipeline_diario",
+        id="pipeline_manana",
+        replace_existing=True,
+    )
+    # Job 2: envía Post 2 a las 7pm (el que quedó guardado desde la mañana)
+    scheduler.add_job(
+        enviar_post2_tarde,
+        CronTrigger(hour=19, minute=0, timezone="America/Mexico_City"),
+        id="pipeline_tarde",
         replace_existing=True,
     )
     scheduler.start()
-    log.info("✅ Scheduler iniciado — pipeline corre cada día a las 7:00am CDMX")
+    log.info("✅ Scheduler iniciado — Post 1 a las 7:00am · Post 2 a las 7:00pm CDMX")
     yield
     scheduler.shutdown()
 
@@ -142,12 +149,4 @@ def ver_estado(secret: str = ""):
     if not os.path.exists("estado_pipeline.json"):
         return {"status": "Sin pipeline activo hoy"}
     try:
-        with open("estado_pipeline.json") as f:
-            return json.load(f)
-    except Exception as e:
-        return {"status": "Error leyendo estado", "error": str(e)}
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("app:app", host="0.0.0.0", port=int(os.environ.get("PORT", 8000)), reload=False)
+        with ope

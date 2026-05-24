@@ -17,11 +17,11 @@ import json
 import datetime
 import anthropic
 from mr_apolo_brand import BRAND_SYSTEM_PROMPT, HASHTAGS_BASE
+import sheets_storage
 
 # ─────────────────────────────────────────
 # CONFIGURACIÓN
 # ─────────────────────────────────────────
-FEEDBACK_FILE = "feedback_history.json"
 HISTORIAL_FILE = "contenido_aprobado.json"
 MAX_FEEDBACK_EN_CONTEXTO = 5   # Cuántos feedbacks recientes incluir al generar
 
@@ -29,24 +29,18 @@ client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 
 # ─────────────────────────────────────────
-# FEEDBACK — Cargar y guardar
+# FEEDBACK — Cargar y guardar (via Google Sheets)
 # ─────────────────────────────────────────
 
 def cargar_feedback():
-    if not os.path.exists(FEEDBACK_FILE):
-        return []
-    with open(FEEDBACK_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def guardar_feedback(feedback_list):
-    with open(FEEDBACK_FILE, "w", encoding="utf-8") as f:
-        json.dump(feedback_list, f, ensure_ascii=False, indent=2)
+    """Lee el historial de feedback desde Google Sheets."""
+    return sheets_storage.cargar_feedback()
 
 def agregar_feedback(contenido_generado: dict, tipo: str, comentario: str):
     """
     tipo: 'aprobado' | 'rechazado' | 'modificado'
+    Guarda en Google Sheets para que persista entre deploys de Railway.
     """
-    feedback_list = cargar_feedback()
     entrada = {
         "fecha": datetime.datetime.now().isoformat(),
         "tipo": tipo,
@@ -54,8 +48,7 @@ def agregar_feedback(contenido_generado: dict, tipo: str, comentario: str):
         "caption_generado": contenido_generado.get("caption", ""),
         "hashtags_generados": contenido_generado.get("hashtags", []),
     }
-    feedback_list.append(entrada)
-    guardar_feedback(feedback_list)
+    sheets_storage.agregar_feedback(entrada)
     print(f"✓ Feedback guardado ({tipo})")
 
 
@@ -248,3 +241,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+                                                                                                                                                                                                 

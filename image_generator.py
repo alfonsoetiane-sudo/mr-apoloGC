@@ -23,6 +23,7 @@ import anthropic
 from openai import OpenAI
 from pathlib import Path
 from mr_apolo_brand import BRAND_COLORS, BRAND_STYLE, BRAND_SYSTEM_PROMPT, DESCRIPCION_EMPAQUE, LOGO_DESCRIPCION
+from sheets_storage import cargar_rotacion, guardar_rotacion
 
 # ─────────────────────────────────────────
 # CONFIGURACIÓN
@@ -31,7 +32,6 @@ OPENAI_KEY    = os.environ.get("OPENAI_API_KEY")
 ANTHROPIC_KEY = os.environ.get("ANTHROPIC_API_KEY")
 IMAGENES_DIR    = Path("imagenes_generadas")
 TENDENCIAS_FILE = "tendencias_competidores.json"
-ROTACION_FILE   = "rotacion_temas.json"
 
 openai_client    = OpenAI(api_key=OPENAI_KEY)
 anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_KEY, max_retries=5)
@@ -43,80 +43,94 @@ IMAGENES_DIR.mkdir(exist_ok=True)
 # TIPOS DE INFOGRAFÍA Y TEMAS POR CATEGORÍA
 # ─────────────────────────────────────────
 TIPOS_INFOGRAFIA = {
-    "comparacion":    "Comparación visual entre comida fresca Mr. Apolo vs croquetas procesadas",
-    "beneficios":     "Lista visual de beneficios del alimento fresco con iconos",
-    "ingredientes":   "Ingredientes frescos del día destacados con colores vibrantes",
+    "comparacion":      "Comparación visual entre comida fresca Mr. Apolo vs croquetas procesadas",
+    "beneficios":       "Lista visual de beneficios del alimento fresco con iconos",
+    "ingredientes":     "Ingredientes frescos del día destacados con colores vibrantes",
     "mito_vs_realidad": "Formato mito vs realidad sobre alimentación canina",
-    "antes_despues":  "Transformación visible en el perro al cambiar a Mr. Apolo",
-    "nutricion":      "Infografía educativa sobre nutrición canina",
-    "receta":         "Paso a paso visual de cómo se prepara Mr. Apolo",
+    "antes_despues":    "Transformación visible en el perro al cambiar a Mr. Apolo",
+    "nutricion":        "Infografía educativa sobre nutrición canina",
+    "receta":           "Paso a paso visual de cómo se prepara Mr. Apolo",
+    "producto":         "Presentación del sobre Mr. Apolo con ingredientes alrededor",
+    "historia":         "Post emocional sobre la historia de Apolo y la marca",
+    "comunidad":        "Post para conectar con la comunidad de dueños de perros",
 }
 
-# Banco de temas balanceados por categoría.
+# Banco de temas — cada entrada indica (tema, receta) para alternar Olímpico y Titán.
 # El sistema rota entre categorías para nunca repetir el mismo tipo dos días seguidos.
 BANCO_TEMAS = {
     "educacion": [
-        "por qué las proteínas animales son esenciales para los perros",
-        "cuánta agua necesita tu perro al día",
-        "diferencia entre alimento fresco y ultra procesado",
-        "qué son los aminoácidos esenciales en la dieta canina",
-        "por qué el intestino de tu perro es su segundo cerebro",
-        "cuántas calorías necesita tu perro según su tamaño",
+        ("por qué las proteínas animales son esenciales para los perros", "olimpico"),
+        ("cuánta agua necesita tu perro al día y cómo la alimentación ayuda", "titan"),
+        ("diferencia entre alimento fresco y ultra procesado para perros", "olimpico"),
+        ("qué son los aminoácidos esenciales en la dieta canina", "titan"),
+        ("por qué el intestino de tu perro es su segundo cerebro", "olimpico"),
+        ("cuántas calorías necesita tu perro según su tamaño y actividad", "titan"),
+        ("por qué el cerdo es una proteína excelente para perros", "titan"),
+        ("beneficios del camote para la digestión de tu perro", "titan"),
     ],
-    "ingredientes": [
-        "pollo fresco: el rey de la proteína canina",
-        "zanahoria: beneficios para la vista de tu perro",
-        "espinaca: hierro natural para perros activos",
-        "arroz integral: energía limpia sin picos de glucosa",
-        "hígado de res: la multivitamina natural para perros",
-        "calabaza: aliada de la digestión canina",
+    "ingredientes_olimpico": [
+        ("pechuga de pollo: la proteína premium que tu perro merece — Receta Olímpico", "olimpico"),
+        ("camote en la dieta de tu perro: energía natural y digestión sana — Olímpico", "olimpico"),
+        ("papaya para perros: la fruta que cuida su estómago — Olímpico", "olimpico"),
+        ("manzana en la dieta canina: antioxidantes y vitaminas reales", "olimpico"),
+        ("calabaza Olímpico: fibra natural para una digestión perfecta", "olimpico"),
+        ("por qué la pechuga de pollo fresca es mejor que el pollo deshidratado", "olimpico"),
+    ],
+    "ingredientes_titan": [
+        ("pulpa de cerdo: proteína suave y digestible para tu perro — Receta Titán", "titan"),
+        ("camote: el superalimento para perros que aún no conoces — Titán", "titan"),
+        ("col en la dieta canina: fibra natural que cuida el intestino", "titan"),
+        ("calabaza para perros: digestión, vitaminas y sin rellenos", "titan"),
+        ("por qué Titán es ideal para perros con estómago sensible", "titan"),
     ],
     "mitos": [
-        "mito: los perros pueden comer cualquier cosa",
-        "mito: la comida casera es peligrosa para los perros",
-        "mito: las croquetas premium son suficientes",
-        "mito: todos los perros necesitan el mismo alimento",
-        "mito: la comida fresca es solo para perros grandes",
-        "mito: cambiar de alimento es malo para los perros",
+        ("mito: el cerdo es malo para los perros — realidad Titán", "titan"),
+        ("mito: las croquetas premium son suficientes para tu perro", "olimpico"),
+        ("mito: la comida casera es peligrosa — Mr. Apolo lo resuelve", "olimpico"),
+        ("mito: todos los perros necesitan el mismo alimento", "titan"),
+        ("mito: la comida fresca es solo para perros grandes o caros", "olimpico"),
+        ("mito: cambiar de alimento daña el estómago del perro", "titan"),
     ],
     "beneficios_visibles": [
-        "pelo más brillante en 3 semanas con comida fresca",
-        "más energía y menos letargo al cambiar de alimento",
-        "mejor digestión: menos gases y heces más firmes",
-        "músculos más definidos con proteína de calidad",
-        "dientes más limpios con alimento natural",
-        "sistema inmune más fuerte con nutrición real",
+        ("pelo más brillante en 3 semanas con la Receta Olímpico", "olimpico"),
+        ("más energía y menos letargo con la Receta Titán", "titan"),
+        ("mejor digestión con Titán: menos gases, heces más firmes", "titan"),
+        ("músculos más definidos con proteína de pollo fresco — Olímpico", "olimpico"),
+        ("sistema inmune más fuerte con nutrición real Mr. Apolo", "olimpico"),
+        ("perros con estómago sensible: cómo Titán los transforma", "titan"),
     ],
     "comparacion": [
-        "comida fresca vs croquetas: lo que el empaque no te dice",
-        "ingredientes que reconoces vs ingredientes que no puedes pronunciar",
-        "costo real de croquetas premium vs Mr. Apolo",
-        "lo que comes tú vs lo que le das a tu perro",
-        "alimento procesado vs alimento fresco: diferencia en energía",
+        ("Receta Olímpico vs croquetas: lo que el empaque no te dice", "olimpico"),
+        ("Titán vs alimento de tienda: ingredientes que sí puedes pronunciar", "titan"),
+        ("costo real de croquetas premium vs Mr. Apolo al mes", "olimpico"),
+        ("lo que comes tú vs lo que le das a tu perro — cambia eso", "titan"),
+        ("alimento procesado vs comida fresca: diferencia en energía real", "olimpico"),
     ],
     "transicion": [
-        "cómo cambiar a tu perro de croquetas a comida fresca en 7 días",
-        "señales de que tu perro está listo para comida fresca",
-        "qué esperar la primera semana con Mr. Apolo",
-        "cómo saber si la porción de tu perro es correcta",
+        ("cómo cambiar a tu perro a Olímpico en 7 días sin problemas", "olimpico"),
+        ("guía para empezar con Titán si tu perro tiene estómago sensible", "titan"),
+        ("qué esperar la primera semana con Mr. Apolo", "olimpico"),
+        ("cómo elegir entre Olímpico y Titán para tu perro", "titan"),
+        ("señales de que tu perro está listo para comida fresca", "olimpico"),
+    ],
+    "historia_marca": [
+        ("la historia de Apolo: el perro rescatado que inspiró una marca", "olimpico"),
+        ("cómo nació Mr. Apolo y por qué importa lo que le das a tu perro", "titan"),
+        ("comida de campeones al alcance de todos — nuestra misión", "olimpico"),
+    ],
+    "comunidad": [
+        ("muéstranos a tu perro disfrutando Mr. Apolo — comparte su historia", "olimpico"),
+        ("¿tu perro es más Olímpico o más Titán? descúbrelo aquí", "titan"),
+        ("los perros de nuestra comunidad ya lo saben — ¿el tuyo también?", "olimpico"),
+        ("dueños de perros en CDMX: esto es para ustedes", "titan"),
     ],
 }
 
 
 # ─────────────────────────────────────────
 # SISTEMA DE ROTACIÓN DE TEMAS
+# (cargar_rotacion / guardar_rotacion vienen de sheets_storage)
 # ─────────────────────────────────────────
-
-def cargar_rotacion() -> dict:
-    """Carga el estado actual de la rotación de temas."""
-    if not os.path.exists(ROTACION_FILE):
-        return {"categorias_usadas": [], "temas_usados": {}}
-    with open(ROTACION_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-def guardar_rotacion(estado: dict):
-    with open(ROTACION_FILE, "w", encoding="utf-8") as f:
-        json.dump(estado, f, ensure_ascii=False, indent=2)
 
 HORARIOS_DIA = {
     "manana": "8:00am — mayor apertura matutina",
@@ -124,19 +138,23 @@ HORARIOS_DIA = {
 }
 
 MAPA_TIPO = {
-    "educacion":          "nutricion",
-    "ingredientes":       "ingredientes",
-    "mitos":              "mito_vs_realidad",
-    "beneficios_visibles":"beneficios",
-    "comparacion":        "comparacion",
-    "transicion":         "antes_despues",
+    "educacion":             "nutricion",
+    "ingredientes_olimpico": "ingredientes",
+    "ingredientes_titan":    "ingredientes",
+    "mitos":                 "mito_vs_realidad",
+    "beneficios_visibles":   "beneficios",
+    "comparacion":           "comparacion",
+    "transicion":            "antes_despues",
+    "historia_marca":        "historia",
+    "comunidad":             "comunidad",
 }
 
-def seleccionar_temas_del_dia() -> list[tuple[str, str, str]]:
+def seleccionar_temas_del_dia() -> list[tuple[str, str, str, str]]:
     """
     Selecciona 2 temas balanceados para el día: uno de mañana y uno de tarde.
     Nunca repite categoría en el mismo día ni en días consecutivos.
-    Retorna lista de (tema, tipo_infografia, horario).
+    Garantiza que un post sea de Olímpico y otro de Titán.
+    Retorna lista de (tema, tipo_infografia, horario, receta).
     """
     estado = cargar_rotacion()
     categorias_usadas = estado.get("categorias_usadas", [])
@@ -150,46 +168,65 @@ def seleccionar_temas_del_dia() -> list[tuple[str, str, str]]:
 
     seleccionados = []
     categorias_hoy = []
+    recetas_hoy = []  # para garantizar variedad Olímpico/Titán
 
     for horario_key, horario_label in HORARIOS_DIA.items():
         # Disponibles: no usadas en días anteriores ni en este mismo día
         disponibles = [c for c in categorias
                        if c not in categorias_usadas and c not in categorias_hoy]
 
-        # Si no quedan, tomar de las no usadas hoy aunque ya se hayan cicleado
         if not disponibles:
             disponibles = [c for c in categorias if c not in categorias_hoy]
+
+        # Si ya tenemos un post de una receta, preferir categorías de la otra
+        if recetas_hoy:
+            receta_necesaria = "titan" if "olimpico" in recetas_hoy else "olimpico"
+            disponibles_pref = [
+                c for c in disponibles
+                if any(t[1] == receta_necesaria for t in BANCO_TEMAS[c])
+            ]
+            if disponibles_pref:
+                disponibles = disponibles_pref
 
         categoria = disponibles[0]
         categorias_hoy.append(categoria)
 
         # Elegir tema no usado dentro de la categoría
-        temas_cat      = BANCO_TEMAS[categoria]
-        usados_en_cat  = temas_usados.get(categoria, [])
-        temas_disp     = [t for t in temas_cat if t not in usados_en_cat]
+        temas_cat     = BANCO_TEMAS[categoria]
+        usados_en_cat = temas_usados.get(categoria, [])
+        temas_disp    = [t for t in temas_cat if t[0] not in usados_en_cat]
 
-        if not temas_disp:          # Reiniciar temas de esa categoría
+        if not temas_disp:
             temas_disp = temas_cat
             temas_usados[categoria] = []
 
-        tema = temas_disp[0]
+        # Si ya hay una receta elegida hoy, preferir la opuesta
+        if recetas_hoy:
+            receta_necesaria = "titan" if "olimpico" in recetas_hoy else "olimpico"
+            pref = [t for t in temas_disp if t[1] == receta_necesaria]
+            if pref:
+                temas_disp = pref
+
+        tema_str, receta = temas_disp[0]
         tipo = MAPA_TIPO.get(categoria, "beneficios")
 
         # Registrar uso
         categorias_usadas.append(categoria)
-        temas_usados.setdefault(categoria, []).append(tema)
+        temas_usados.setdefault(categoria, []).append(tema_str)
+        recetas_hoy.append(receta)
 
-        seleccionados.append((tema, tipo, horario_label))
+        seleccionados.append((tema_str, tipo, horario_label, receta))
 
         print(f"\n🎯 Post {horario_key}:")
         print(f"   Categoría : {categoria}")
-        print(f"   Tema      : {tema}")
+        print(f"   Receta    : {receta}")
+        print(f"   Tema      : {tema_str}")
         print(f"   Tipo      : {tipo}")
         print(f"   Horario   : {horario_label}")
 
     guardar_rotacion({
         "categorias_usadas": categorias_usadas,
-        "temas_usados":      temas_usados,
+        "temas_usadas":      temas_usados,
         "ultima_fecha":      datetime.datetime.now().isoformat(),
         "posts_hoy":         [s[0] for s in seleccionados],
     })
@@ -213,45 +250,44 @@ def cargar_tendencias() -> dict:
 # GENERAR PROMPT PARA DALL-E
 # ─────────────────────────────────────────
 
-def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False, feedback_extra: str = None, estilo: str = "cartoon") -> str:
+def generar_prompt_dalle(tema: str, tipo_infografia: str, tendencias: dict, con_referencia: bool = False, feedback_extra: str = None, estilo: str = "cartoon", receta: str = "olimpico") -> str:
     """Claude genera el prompt optimizado para gpt-image-1 basado en el tema y tendencias."""
     from mr_apolo_brand import INGREDIENTES_RECETAS
 
     tendencias_str = json.dumps(tendencias, ensure_ascii=False) if tendencias else "Sin tendencias previas"
-    ingredientes_str = ", ".join(INGREDIENTES_RECETAS["comunes"])
+    ingredientes_receta = INGREDIENTES_RECETAS.get(receta, INGREDIENTES_RECETAS["olimpico"])
+    ingredientes_str = ", ".join(ingredientes_receta)
+    nombre_receta = "Olímpico (proteína de pollo)" if receta == "olimpico" else "Titán (proteína de cerdo)"
 
     modo = "ADAPTAR la imagen de referencia del competidor" if con_referencia else "CREAR una infografía de Instagram"
-
     feedback_str = f"\nFEEDBACK DEL USUARIO (CORRIGE ESTO en la nueva versión): {feedback_extra}" if feedback_extra else ""
 
     instruccion = f"""Genera un prompt detallado en inglés para gpt-image-1 que sirva para {modo} para Mr. Apolo.
 
 Tema: {tema}
+Receta destacada: {nombre_receta}
 Tipo de infografía: {tipo_infografia} — {TIPOS_INFOGRAFIA.get(tipo_infografia, '')}
-Ingredientes reales del producto (úsalos como elementos visuales): {ingredientes_str}
+Ingredientes reales de ESTA receta (úsalos como elementos visuales, NO otros): {ingredientes_str}
 Tendencias detectadas en competidores: {tendencias_str}{feedback_str}
 
 Estilo visual de la marca:
 {BRAND_STYLE}
 
-Logo oficial Mr. Apolo (descripción exacta, replicar fielmente):
-{LOGO_DESCRIPCION}
-
 Descripción exacta del empaque (si el producto aparece en la imagen):
-{DESCRIPCION_EMPAQUE.get('olimpico', '')}
+{DESCRIPCION_EMPAQUE.get(receta, DESCRIPCION_EMPAQUE['olimpico'])}
 
 {"ESTILO DEL POST: INFOGRAFÍA CARTOON EDUCATIVA" if estilo == "cartoon" else "ESTILO DEL POST: INFOGRAFÍA FOTORREALISTA PREMIUM"}
 
 REGLAS CRÍTICAS para el prompt:
-{"0. Estilo CARTOON EDUCATIVO completo — toda la imagen es una ilustración. Igual al estilo del logo oficial Mr. Apolo: semi-realista, no infantil. Perro negro con pecho blanco y lengua afuera cuando aparezca. Ingredientes como elementos ilustrados. Texto educativo integrado en la ilustración con tipografía bold en dorado y blanco." if estilo == "cartoon" else "0. Estilo FOTORREALISTA premium — toda la imagen es tipo fotografía editorial de alta calidad. Ingredientes frescos reales en primer plano, iluminación de estudio profesional, fondos limpios. El logo Mr. Apolo aparece como overlay en esquina. Texto informativo superpuesto con tipografía bold."}
-1. Los ingredientes visibles deben ser SOLO: pollo fresco, zanahoria, espinaca, calabacita. Nunca otros.
+{"0. Estilo CARTOON EDUCATIVO completo — toda la imagen es una ilustración. Semi-realista, no infantil. Perro negro con pecho blanco y lengua afuera cuando aparezca. Ingredientes ilustrados. Texto educativo bold en dorado y blanco." if estilo == "cartoon" else "0. Estilo FOTORREALISTA premium — fotografía editorial de alta calidad. Ingredientes frescos en primer plano, iluminación de estudio profesional, fondo oscuro limpio."}
+1. Los ingredientes visibles deben ser EXACTAMENTE los de la receta {nombre_receta}: {ingredientes_str}. Nunca mezcles con otras recetas.
 2. TODO el texto visible en la imagen debe estar en ESPAÑOL. Nunca en inglés.
 3. {"Si hay imagen de referencia: mantener layout y composición. Solo cambiar branding a Mr. Apolo." if con_referencia else "Describir la composición visual completa de la infografía."}
 4. Colores: fondo #1C1C1C, títulos #C9A84C dorado, texto blanco.
-5. Logo Mr. Apolo (círculo dorado con perro cartoon) visible en esquina inferior, pequeño pero legible.
+5. NO incluir ningún logotipo, emblema circular ni texto de marca en la imagen. El logo se agrega digitalmente después. Dejar espacio limpio en la esquina inferior derecha.
 6. Formato cuadrado 1:1 para Instagram.
 7. Máximo 900 caracteres.
-8. Incluir al final: "All visible text in the image must be in Spanish only, not English."
+8. Incluir al final: "All visible text in the image must be in Spanish only, not English. Do NOT include any logo, circular emblem, or brand watermark in the image."
 
 Responde SOLO con el prompt en inglés, sin explicaciones."""
 
@@ -321,139 +357,63 @@ def generar_imagen(prompt: str, nombre_archivo: str, imagen_referencia: str = No
         )
 
     print(f"✅ Imagen guardada: {ruta}")
-    return _guardar_respuesta_openai(response, ruta, prompt)
+    ruta_str, prompt_rev = _guardar_respuesta_openai(response, ruta, prompt)
+    # Añadir watermark de texto con Pillow (evita logos falsos de la IA)
+    agregar_watermark(ruta_str)
+    return ruta_str, prompt_rev
 
 
 # ─────────────────────────────────────────
-# GENERAR CAPTION PARA LA INFOGRAFÍA
+# WATERMARK — overlay de etiqueta real o texto de respaldo
 # ─────────────────────────────────────────
 
-def generar_caption_infografia(tema: str, tipo_infografia: str, feedback_extra: str = None) -> dict:
-    """Genera el caption de Instagram que acompaña la infografía."""
-    from content_generator import generar_contenido
-    from mr_apolo_brand import INGREDIENTES_RECETAS
+LOGO_FILE = "mr_apolo_logo.png"   # etiqueta oficial Mr. Apolo
+LOGO_SIZE_RATIO = 0.22            # el logo ocupa 22% del ancho de la imagen
 
-    ingredientes_str = ", ".join(INGREDIENTES_RECETAS["comunes"])
-    contexto = (
-        f"Este post es una infografía tipo '{tipo_infografia}'. "
-        f"El texto debe complementar la imagen visual, no repetir lo que ya se ve en ella. "
-        f"Ser más corto de lo normal ya que la imagen ya comunica mucho. "
-        f"Ingredientes reales del producto (solo menciona estos): {ingredientes_str}."
-    )
-    if feedback_extra:
-        contexto += f" IMPORTANTE: el usuario rechazó la versión anterior porque '{feedback_extra}'. Corrígelo en esta nueva versión."
+def agregar_watermark(ruta_imagen: str):
+    """
+    Si existe mr_apolo_logo.jpg en la raíz del repo, lo pega en la esquina
+    inferior derecha de la imagen generada.
+    Si no existe, cae back a texto '@mr.apolo_petfood' en dorado.
 
-    return generar_contenido(tema, contexto_extra=contexto)
+    Para activar el logo real:
+      1. Guarda la etiqueta como 'mr_apolo_logo.jpg' en la raíz del repo
+      2. Haz commit y push — Railway lo incluirá automáticamente
+    """
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        img = Image.open(ruta_imagen).convert("RGBA")
+        w, h = img.size
+        margin = w // 40
 
+        if os.path.exists(LOGO_FILE):
+            # ── Overlay de imagen real ──────────────────────────────
+            logo = Image.open(LOGO_FILE).convert("RGBA")
+            logo_w = int(w * LOGO_SIZE_RATIO)
+            logo_h = int(logo.height * logo_w / logo.width)
+            logo = logo.resize((logo_w, logo_h), Image.LANCZOS)
 
-# ─────────────────────────────────────────
-# GUARDAR RESULTADO
-# ─────────────────────────────────────────
+            # Posición: esquina inferior derecha
+            x = w - logo_w - margin
+            y = h - logo_h - margin
 
-def guardar_resultado(tema: str, tipo: str, ruta_imagen: str, caption: dict, prompt_usado: str):
-    historial_file = "imagenes_historial.json"
-    historial = []
-    if os.path.exists(historial_file):
-        with open(historial_file, "r", encoding="utf-8") as f:
-            historial = json.load(f)
+            # Pegar con leve transparencia (90% opaco)
+            logo_semi = logo.copy()
+            alpha = logo_semi.split()[3]
+            alpha = alpha.point(lambda p: int(p * 0.90))
+            logo_semi.putalpha(alpha)
 
-    historial.append({
-        "fecha": datetime.datetime.now().isoformat(),
-        "tema": tema,
-        "tipo": tipo,
-        "ruta_imagen": ruta_imagen,
-        "prompt_dalle": prompt_usado,
-        "caption": caption.get("caption", ""),
-        "hashtags": caption.get("hashtags", []),
-        "horario_sugerido": caption.get("horario_sugerido", ""),
-    })
+            img.paste(logo_semi, (x, y), logo_semi)
+            img.convert("RGB").save(ruta_imagen, "PNG")
+            print(f"✅ Logo overlay añadido desde {LOGO_FILE}")
 
-    with open(historial_file, "w", encoding="utf-8") as f:
-        json.dump(historial, f, ensure_ascii=False, indent=2)
-
-
-# ─────────────────────────────────────────
-# MOSTRAR RESULTADO FINAL
-# ─────────────────────────────────────────
-
-def mostrar_resultado(ruta_imagen: str, caption: dict, tipo: str):
-    print("\n" + "═" * 55)
-    print("🖼️   INFOGRAFÍA GENERADA — Mr. Apolo")
-    print("═" * 55)
-    print(f"\n📁 Imagen guardada en: {ruta_imagen}")
-    print(f"\n📝 CAPTION:\n{caption.get('caption', '')}")
-    print(f"\n#️⃣  HASHTAGS:\n{' '.join(caption.get('hashtags', []))}")
-    print(f"\n🕐 HORARIO: {caption.get('horario_sugerido', '')}")
-    print("═" * 55)
-
-
-# ─────────────────────────────────────────
-# FLUJO PRINCIPAL
-# ─────────────────────────────────────────
-
-def main():
-    import sys
-
-    print("\n🐾 Mr. Apolo — Generador de Infografías")
-    print("─" * 40)
-
-    # Cargar tendencias de competidores si existen
-    tendencias = cargar_tendencias()
-    if tendencias:
-        print("\n📊 Usando tendencias de competidores como referencia")
-
-    # Seleccionar 2 temas del día automáticamente
-    posts_dia = seleccionar_temas_del_dia()
-
-    # Buscar imágenes de competidores disponibles para usar como referencia
-    imagenes_competidores = []
-    carpeta_comp = Path("imagenes_competidores")
-    if carpeta_comp.exists():
-        imagenes_competidores = sorted(
-            [str(p) for p in carpeta_comp.glob("*.jpg") if p.stat().st_size > 10000],
-            key=lambda x: os.path.getmtime(x),
-            reverse=True
-        )
-
-    if imagenes_competidores:
-        print(f"\n📸 {len(imagenes_competidores)} imágenes de competidores disponibles como referencia")
-    else:
-        print("\n⚠️  Sin imágenes de competidores. Corre competitor_monitor.py primero para descargarlas.")
-
-    for i, (tema, tipo, horario) in enumerate(posts_dia, 1):
-        print(f"\n{'═'*55}")
-        print(f"  GENERANDO POST {i} de 2 — {horario}")
-        print(f"{'═'*55}")
-
-        # Usar imagen de competidor como referencia si está disponible
-        # Rotar entre las imágenes disponibles para no repetir
-        img_ref = imagenes_competidores[(i - 1) % len(imagenes_competidores)] if imagenes_competidores else None
-        con_referencia = img_ref is not None
-
-        if con_referencia:
-            print(f"   Adaptando estilo de: {os.path.basename(img_ref)}")
-
-        # Generar prompt y imagen
-        print("\n🧠 Claude generando prompt...")
-        prompt = generar_prompt_dalle(tema, tipo, tendencias, con_referencia=con_referencia)
-
-        fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        nombre_archivo = f"mrapolo_post{i}_{tipo}_{fecha_str}.png"
-        ruta_imagen, prompt_revisado = generar_imagen(prompt, nombre_archivo, imagen_referencia=img_ref)
-
-        # Generar caption
-        print("\n✍️  Generando caption...")
-        caption = generar_caption_infografia(tema, tipo)
-        caption["horario_sugerido"] = horario
-
-        mostrar_resultado(ruta_imagen, caption, tipo)
-        guardar_resultado(tema, tipo, ruta_imagen, caption, prompt_revisado)
-
-        if i < len(posts_dia):
-            input("\n⏎  Presiona Enter para generar el siguiente post...")
-
-    print(f"\n✅ 2 posts del día generados y guardados en: imagenes_generadas/")
-
-
-if __name__ == "__main__":
-    main()
+        else:
+            # ── Fallback: texto en dorado ───────────────────────────
+            overlay = Image.new("RGBA", img.size, (0, 0, 0, 0))
+            draw = ImageDraw.Draw(overlay)
+            texto = "@mr.apolo_petfood"
+            font_size = max(24, w // 38)
+            try:
+                font = ImageFont.truetype(
+                    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size
+         

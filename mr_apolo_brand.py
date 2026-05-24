@@ -6,24 +6,21 @@ Edita este archivo para ajustar la voz, tono y reglas de contenido de Mr. Apolo.
 
 INGREDIENTES_RECETAS = {
     "olimpico": [
-        "pollo fresco desmenuzado",
-        "zanahoria en cubos",
-        "espinaca",
-        "calabacita",
-        "arroz integral",
+        "pechuga de pollo",
+        "camote",
+        "calabaza",
+        "papaya",
+        "manzana",
     ],
     "titan": [
-        "pollo fresco desmenuzado",
+        "pulpa de cerdo desmenuzada",
+        "camote en cubos",
         "zanahoria en cubos",
-        "calabacita en cubos",
-        "arroz integral",
+        "calabaza en cubos",
+        "col picada",
     ],
     "comunes": [
-        "pollo fresco",
         "zanahoria",
-        "calabacita",
-        "arroz integral",
-        "espinaca",
     ]
 }
 
@@ -52,10 +49,10 @@ Esto es importante: nunca decir que reemplaza la comida, siempre hablar de compl
 - Usa "tu perro" / "tu peludo" / "tu compañero", nunca "tu mascota" (suena distante)
 - El origen de Apolo (perro rescatado) puede usarse para contenido emocional que convierta
 
-## Ingredientes reales de Mr. Apolo
-Receta Olímpico: pollo fresco desmenuzado, zanahoria, espinaca, calabacita, arroz integral.
-Receta Titán: pollo fresco desmenuzado, zanahoria, calabacita, arroz integral.
-IMPORTANTE: Solo mencionar ESTOS ingredientes. No inventar nada.
+## Ingredientes reales de Mr. Apolo — MEMORÍZALOS, nunca inventes otros
+Receta Olímpico (proteína de POLLO): pechuga de pollo, camote, calabaza, papaya, manzana.
+Receta Titán (proteína de CERDO): pulpa de cerdo desmenuzada, camote, zanahoria, calabaza, col.
+CRÍTICO: Solo mencionar exactamente ESTOS ingredientes según la receta del post. Nunca mezclar ingredientes entre recetas. Nunca inventar ingredientes que no estén en esta lista.
 
 ## Reglas de copy de marketing
 1. HOOK en la primera línea — la primera oración tiene que detener el scroll. Pregunta, dato impactante o afirmación provocadora.
@@ -114,7 +111,7 @@ BRAND_STYLE = """Estilo visual Mr. Apolo:
 - Fondo oscuro (#1C1C1C o #0A0A0A), estética premium y oscura
 - Acentos y títulos en dorado (#C9A84C)
 - Tipografía bold, grande, impactante — estilo editorial
-- Ingredientes frescos reales visibles: pollo, zanahoria, espinaca, calabacita
+- Ingredientes frescos reales visibles según receta: Olímpico (pechuga de pollo, camote, calabaza, papaya, manzana) / Titán (pulpa de cerdo, camote, zanahoria, calabaza, col)
 - Mascota: perro negro con pecho blanco, lengua afuera, expresivo y feliz — estilo CARTOON REALISTA igual que el logo
 - Logo oficial siempre presente: círculo dorado, perro cartoon, 'MR APOLO' en dorado, tagline curvo en dorado
 - Estilo ilustración: cartoon educativo con detalles semi-realistas (no fotorrealista, no demasiado infantil)
@@ -133,30 +130,33 @@ Divide la imagen cuadrada en DOS mitades verticales o con forma orgánica:
 # DESCRIPCIÓN EXACTA DEL EMPAQUE (Sobre Olímpico)
 # Usar esta descripción en prompts de imagen para que la IA lo replique
 # ─────────────────────────────────────────
-LOGO_DESCRIPCION = """Logo circular oficial de Mr. Apolo (úsalo exactamente así):
-- Fondo circular negro oscuro (#0A0A0A) con borde circular dorado (#C9A84C)
-- Texto 'MR APOLO' en letras bold doradas en la parte superior del círculo, tipografía sans-serif impactante
-- Al centro: ilustración estilo cartoon realista de un perro negro con pecho blanco, lengua afuera lamiéndose, expresión feliz y energética
-- Rodeando al perro dentro del círculo: zanahorias naranjas, hojas de espinaca verde, calabacita
-- Texto curvo en dorado en la parte inferior del círculo: 'comida de campeones, al alcance de todos.'
-- En la base (fuera del círculo) texto blanco pequeño: www.mrapolo.com | @mr.apolo_petfood | @mcapolo.pet.food"""
+LOGO_DESCRIPCION = """Logo circular oficial de Mr. Apolo (descripción exacta basada en imagen real):
+- Fondo cuadrado negro oscuro (#0A0A0A)
+- Círculo con borde dorado fino (#C9A84C)
+- Texto 'MR APOLO' en letras bold doradas arqueadas en la parte SUPERIOR del círculo, tipografía sans-serif grande e impactante
+- Al centro: ilustración SEMI-REALISTA (no cartoon simple) de un perro negro con pecho blanco, lengua rosada saliendo y lamiéndose, expresión feliz y enérgica. Estilo ilustración detallada, no caricatura simple.
+- Lado izquierdo del perro: zanahorias naranjas con hojas verdes y vegetales frescos
+- Lado derecho del perro: hojas verdes (espinaca/lechuga) y zanahoria
+- Parte inferior delantera: trozos de carne cruda rosa (proteína fresca visible)
+- Texto curvo en dorado en la parte INFERIOR del círculo: 'comida de campeones, al alcance de todos.'
+- Fuera del círculo, en la base: iconos y texto pequeño blanco con www.mrapolo.com | @mr.apola_petfood | TikTok handle"""
 
 DESCRIPCION_EMPAQUE = {
     "olimpico": """Bolsa transparente de plástico sellada al vacío.
-A través de la bolsa se ve la comida fresca: mezcla rústica en tonos café, naranja y verde oscuro (pollo, zanahoria, espinaca).
+A través de la bolsa se ve la comida fresca: pechuga de pollo desmenuzada, camote naranja, calabaza, trozos de papaya y manzana.
 Etiqueta cuadrada negra (#0A0A0A) al centro con el logo oficial Mr. Apolo:
   - Círculo dorado con 'MR APOLO' arriba en dorado bold
   - Perro negro con pecho blanco, lengua afuera, estilo cartoon realista
-  - Rodeado de zanahorias y espinaca dentro del círculo
+  - Rodeado de camote y calabaza dentro del círculo
   - 'comida de campeones, al alcance de todos.' curvo en dorado abajo
 Bolsa sobre superficie oscura, fondo negro premium.""",
 
     "titan": """Bolsa transparente de plástico sellada al vacío.
-A través de la bolsa se ve la comida fresca: trozos visibles de pollo desmenuzado, zanahoria naranja, calabacita verde en cubos.
+A través de la bolsa se ve la comida fresca: pulpa de cerdo desmenuzada, camote naranja, zanahoria, calabaza y col.
 Etiqueta cuadrada negra (#0A0A0A) al centro con el logo oficial Mr. Apolo:
   - Círculo dorado con 'MR APOLO' arriba en dorado bold
   - Perro negro con pecho blanco, lengua afuera, estilo cartoon realista
-  - Rodeado de zanahorias y calabacita dentro del círculo
+  - Rodeado de zanahoria y camote dentro del círculo
   - 'comida de campeones, al alcance de todos.' curvo en dorado abajo
 Bolsa sobre tabla de madera de cocina, ingredientes frescos al lado."""
 }
@@ -192,21 +192,4 @@ COMPETIDORES = {
     "soydoggera":     "Competidor local México",
     "lulapetclan":    "Competidor local México",
     "truf.pet":       "Competidor local México",
-    "petstable":      "Competidor local México",
-    "ilovemydogmx":   "Competidor local México",
-}
-
-HASHTAGS_MONITOREAR = [
-    "AlimentoFrescoPerros",
-    "ComidaParaPerros",
-    "ComidaCaseraPerros",
-    "PerrosSaludablesMexico",
-    "RawFeedingMexico",
-    "AlimentacionNaturalPerros",
-]
-
-# Posts mínimos de likes para considerar "exitoso"
-ENGAGEMENT_MINIMO_LIKES = 100
-
-# Cuántos posts top scrapeear por cuenta
-POSTS_POR_CUENTA = 12
+    "petstable":      "Compet

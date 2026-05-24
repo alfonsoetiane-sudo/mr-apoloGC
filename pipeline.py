@@ -19,16 +19,15 @@ from competitor_monitor import analizar_competidores, guardar_tendencias, cargar
 from image_generator import seleccionar_temas_del_dia, generar_prompt_dalle, generar_imagen, generar_caption_infografia
 from content_generator import cargar_feedback
 from whatsapp_client import enviar_texto, enviar_imagen_desde_archivo
+import sheets_storage
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("pipeline")
 
-ESTADO_FILE = "estado_pipeline.json"
-
 
 # ─────────────────────────────────────────
-# ESTADO DEL PIPELINE
-# Guarda qué posts están pendientes de aprobación
+# ESTADO DEL PIPELINE (via Google Sheets)
+# Persiste entre deploys y restarts de Railway
 # ─────────────────────────────────────────
 
 def guardar_estado(posts: list):
@@ -37,15 +36,12 @@ def guardar_estado(posts: list):
         "fecha": datetime.datetime.now().isoformat(),
         "posts": posts,
         "post_actual": 0,  # índice del post que está esperando respuesta
+        "post2_enviado": False,  # evitar enviar el post 2 dos veces
     }
-    with open(ESTADO_FILE, "w", encoding="utf-8") as f:
-        json.dump(estado, f, ensure_ascii=False, indent=2)
+    sheets_storage.guardar_estado(estado)
 
 def cargar_estado() -> dict | None:
-    if not os.path.exists(ESTADO_FILE):
-        return None
-    with open(ESTADO_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+    return sheets_storage.cargar_estado()
 
 def actualizar_estado_post(indice: int, resultado: str, comentario: str = ""):
     estado = cargar_estado()
@@ -54,8 +50,7 @@ def actualizar_estado_post(indice: int, resultado: str, comentario: str = ""):
     estado["posts"][indice]["resultado"] = resultado
     estado["posts"][indice]["comentario"] = comentario
     estado["post_actual"] = indice + 1
-    with open(ESTADO_FILE, "w", encoding="utf-8") as f:
-        json.dump(estado, f, ensure_ascii=False, indent=2)
+    sheets_storage.guardar_estado(estado)
 
 
 # ─────────────────────────────────────────
@@ -63,29 +58,63 @@ def actualizar_estado_post(indice: int, resultado: str, comentario: str = ""):
 # ─────────────────────────────────────────
 
 def guardar_feedback_pipeline(tema: str, caption: str, resultado: str, comentario: str):
-    """Guarda feedback en el archivo local que usa el generador."""
-    feedback_file = "feedback_history.json"
-    historial = []
-    if os.path.exists(feedback_file):
-        with open(feedback_file, "r", encoding="utf-8") as f:
-            historial = json.load(f)
-
-    historial.append({
+    """Guarda feedback en Google Sheets para que persista entre deploys de Railway."""
+    entrada = {
         "fecha": datetime.datetime.now().isoformat(),
         "tipo": resultado.lower(),
         "comentario": comentario,
         "caption_generado": caption,
         "hashtags_generados": [],
         "tema": tema,
-    })
-
-    with open(feedback_file, "w", encoding="utf-8") as f:
-        json.dump(historial, f, ensure_ascii=False, indent=2)
+    }
+    sheets_storage.agregar_feedback(entrada)
 
 
 # ─────────────────────────────────────────
 # FLUJO PRINCIPAL DEL DÍA
 # ─────────────────────────────────────────
+
+async def enviar_post2_tarde():
+    """
+    Corre a las 7pm CDMX.
+    Envía el Post 2 que fue generado esta mañana a las 7am.
+    Si el Post 1 todavía no fue aprobado, avisa al usuario.
+    """
+    log.info("🌙 Enviando Post 2 del día (7pm)...")
+    estado = cargar_estado()
+
+    if not estado:
+        log.warning("⚠️ No hay pipeline activo hoy — ¿corrió el pipeline de las 7am?")
+        enviar_texto("⚠️ No encontré posts generados para hoy. ¿Ocurrió algún error a las 7am?")
+        return
+
+    posts = estado.get("posts", [])
+    if len(posts) < 2:
+        log.warning("⚠️ Solo hay 1 post en el estado, no hay Post 2 para enviar")
+        return
+
+    # Verificar si el post 2 ya fue enviado antes
+    if estado.get("post2_enviado"):
+        log.info("ℹ️ Post 2 ya fue enviado antes, omitiendo")
+        return
+
+    post2 = posts[1]
+
+    # Si el Post 1 todavía no fue resuelto, avisar
+    if post2.get("resultado") is None and posts[0].get("resultado") is None:
+        enviar_texto(
+            "🕖 Son las 7pm — aquí va el segundo post del día.\n"
+            "⚠️ Nota: aún no respondiste al Post 1 de esta mañana. "
+            "Respóndelo cuando puedas para no perderlo.\n\n"
+        )
+
+    # Marcar como enviado en el estado antes de mandar (para evitar doble envío)
+    estado["post2_enviado"] = True
+    sheets_storage.guardar_estado(estado)
+
+    await enviar_post_whatsapp(post2, es_primero=False)
+    log.info("✅ Post 2 enviado a las 7pm")
+
 
 async def ejecutar_pipeline():
     """Corre el pipeline completo del día y envía el primer post por WhatsApp."""
@@ -113,26 +142,27 @@ async def ejecutar_pipeline():
         # Post 1 siempre cartoon educativo, Post 2 fotorrealista premium
         ESTILOS_DIA = ["cartoon", "realista"]
         posts_generados = []
-        for i, (tema, tipo, horario) in enumerate(posts_dia, 1):
-            log.info(f"🎨 Generando post {i}: {tema}")
+        for i, (tema, tipo, horario, receta) in enumerate(posts_dia, 1):
+            log.info(f"🎨 Generando post {i}: {tema} | Receta: {receta}")
             estilo = ESTILOS_DIA[(i - 1) % len(ESTILOS_DIA)]
             log.info(f"🎨 Estilo: {estilo}")
 
             # Imagen
-            prompt = generar_prompt_dalle(tema, tipo, tendencias or {}, estilo=estilo)
+            prompt = generar_prompt_dalle(tema, tipo, tendencias or {}, estilo=estilo, receta=receta)
             fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre = f"mrapolo_post{i}_{tipo}_{fecha_str}.png"
+            nombre = f"mrapolo_post{i}_{receta}_{tipo}_{fecha_str}.png"
             Path("imagenes_generadas").mkdir(exist_ok=True)
             ruta_img, _ = generar_imagen(prompt, nombre)
 
             # Caption
-            caption_data = generar_caption_infografia(tema, tipo)
+            caption_data = generar_caption_infografia(tema, tipo, receta=receta)
             caption_data["horario_sugerido"] = horario
 
             posts_generados.append({
                 "numero": i,
                 "tema": tema,
                 "tipo": tipo,
+                "receta": receta,
                 "horario": horario,
                 "caption": caption_data.get("caption", ""),
                 "hashtags": caption_data.get("hashtags", []),
@@ -276,30 +306,4 @@ async def _regenerar_post(post: dict, idx: int, motivo: str):
             "resultado": None,
         })
         estado["post_actual"] = idx  # Volver al mismo post
-        with open(ESTADO_FILE, "w", encoding="utf-8") as f:
-            json.dump(estado, f, ensure_ascii=False, indent=2)
-
-        # Enviar el post regenerado
-        await enviar_post_whatsapp(estado["posts"][idx])
-        log.info(f"🔄 Post {post['numero']} regenerado y enviado")
-
-    except Exception as e:
-        log.error(f"❌ Error regenerando post: {e}")
-        enviar_texto(f"❌ Error al regenerar: {str(e)[:100]}\nIntenta de nuevo con ❌ + motivo.")
-
-
-def _publicar_en_instagram(post: dict):
-    """Publica el post en Instagram via Meta Graph API."""
-    ig_token    = os.environ.get("META_IG_TOKEN")
-    ig_user_id  = os.environ.get("META_IG_USER_ID")
-
-    if not ig_token or not ig_user_id:
-        log.warning("⚠️ META_IG_TOKEN o META_IG_USER_ID no configurados. No se publicó en Instagram.")
-        return
-
-    import requests
-    caption_completo = f"{post['caption']}\n\n{' '.join(post['hashtags'])}"
-
-    # Nota: Meta Graph API requiere URL pública de la imagen, no ruta local.
-    # Para producción completa, subir la imagen a un storage público (S3, Cloudinary, etc.)
-    log.info(f"📸 Publicación en Instagram pendiente de configurar URL pública de imagen.")
+        with open(ESTADO_FILE, "w", encoding=
