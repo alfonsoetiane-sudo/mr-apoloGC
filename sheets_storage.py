@@ -53,9 +53,9 @@ def _get_sheet():
         creds = Credentials.from_service_account_info(creds_json, scopes=scopes)
         _gc = gspread.authorize(creds)
 
-        sheet_id = os.environ.get("GOOGLE_SHEETS_ID")
+        sheet_id = os.environ.get("GOOGLE_SHEETS_ID") or os.environ.get("SHEET_ID")
         if not sheet_id:
-            raise ValueError("GOOGLE_SHEETS_ID no configurado")
+            raise ValueError("SHEET_ID no configurado")
 
         _sh = _gc.open_by_key(sheet_id)
         log.info("✅ Google Sheets conectado")
