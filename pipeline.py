@@ -152,7 +152,7 @@ async def ejecutar_pipeline():
             fecha_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
             nombre = f"mrapolo_post{i}_{receta}_{tipo}_{fecha_str}.png"
             Path("imagenes_generadas").mkdir(exist_ok=True)
-            ruta_img, _ = generar_imagen(prompt, nombre)
+            ruta_img, _ = generar_imagen(prompt, nombre, es_producto=(tipo == "producto"))
 
             # Caption
             caption_data = generar_caption_infografia(tema, tipo, receta=receta)
@@ -306,4 +306,76 @@ async def _regenerar_post(post: dict, idx: int, motivo: str):
             "resultado": None,
         })
         estado["post_actual"] = idx  # Volver al mismo post
-        with open(ESTADO_FILE, "w", encoding=
+        sheets_storage.guardar_estado(estado)
+
+        # Reenviar el post regenerado para aprobación
+        await enviar_post_whatsapp(post)
+        enviar_texto("✅ Post regenerado con tu feedback. ¿Qué te parece?")
+
+    except Exception as e:
+        log.error(f"❌ Error regenerando post: {e}")
+        enviar_texto(f"❌ Error regenerando el post: {str(e)[:200]}")
+
+
+# ─────────────────────────────────────────
+# PUBLICAR EN INSTAGRAM
+# ─────────────────────────────────────────
+
+def _publicar_en_instagram(post: dict):
+    """
+    Publica la imagen en Instagram vía Meta Graph API.
+    Requiere: META_IG_TOKEN y META_IG_USER_ID en Railway env vars.
+    La imagen se sirve como archivo estático desde Railway.
+    """
+    import httpx
+
+    ig_token   = os.environ.get("META_IG_TOKEN")
+    ig_user_id = os.environ.get("META_IG_USER_ID")
+    railway_url = os.environ.get("RAILWAY_PUBLIC_DOMAIN", "mr-apolo-production.up.railway.app")
+
+    if not ig_token or not ig_user_id:
+        log.warning("⚠️ META_IG_TOKEN o META_IG_USER_ID no configurados — omitiendo publicación en Instagram")
+        return
+
+    ruta = post.get("ruta_imagen", "")
+    nombre_archivo = Path(ruta).name
+    imagen_url = f"https://{railway_url}/imagenes/{nombre_archivo}"
+
+    caption_texto = post.get("caption", "")
+    hashtags_str  = " ".join(post.get("hashtags", []))
+    caption_final = f"{caption_texto}\n\n{hashtags_str}"
+
+    try:
+        # Paso 1: Crear el contenedor de media
+        r1 = httpx.post(
+            f"https://graph.facebook.com/v19.0/{ig_user_id}/media",
+            params={
+                "image_url":  imagen_url,
+                "caption":    caption_final,
+                "access_token": ig_token,
+            },
+            timeout=30,
+        )
+        r1.raise_for_status()
+        creation_id = r1.json().get("id")
+        if not creation_id:
+            log.error(f"❌ Instagram no devolvió creation_id: {r1.text}")
+            return
+
+        log.info(f"📸 Media container creado: {creation_id}")
+
+        # Paso 2: Publicar el contenedor
+        r2 = httpx.post(
+            f"https://graph.facebook.com/v19.0/{ig_user_id}/media_publish",
+            params={
+                "creation_id": creation_id,
+                "access_token": ig_token,
+            },
+            timeout=30,
+        )
+        r2.raise_for_status()
+        post_id = r2.json().get("id")
+        log.info(f"✅ Publicado en Instagram — post_id: {post_id}")
+
+    except Exception as e:
+        log.error(f"❌ Error publicando en Instagram: {e}")

@@ -15,6 +15,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
@@ -63,6 +64,11 @@ async def lifespan(app: FastAPI):
 # ─────────────────────────────────────────
 
 app = FastAPI(title="Mr. Apolo Content Pipeline", lifespan=lifespan)
+
+# Servir imágenes generadas como archivos estáticos para que Meta pueda accederlas
+import pathlib
+pathlib.Path("imagenes_generadas").mkdir(exist_ok=True)
+app.mount("/imagenes", StaticFiles(directory="imagenes_generadas"), name="imagenes")
 
 
 @app.get("/")
