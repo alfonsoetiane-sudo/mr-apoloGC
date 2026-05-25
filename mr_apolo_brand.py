@@ -192,4 +192,21 @@ COMPETIDORES = {
     "soydoggera":     "Competidor local México",
     "lulapetclan":    "Competidor local México",
     "truf.pet":       "Competidor local México",
-    "petstable":      "Compet
+    "petstable":      "Competidor local México",
+    "ilovemydogmx":   "Competidor local México",
+}
+
+HASHTAGS_MONITOREAR = [
+    "AlimentoFrescoPerros",
+    "ComidaParaPerros",
+    "ComidaCaseraPerros",
+    "PerrosSaludablesMexico",
+    "RawFeedingMexico",
+    "AlimentacionNaturalPerros",
+]
+
+# Posts mínimos de likes para considerar "exitoso"
+ENGAGEMENT_MINIMO_LIKES = 100
+
+# Cuántos posts top scrapeear por cuenta
+POSTS_POR_CUENTA = 12

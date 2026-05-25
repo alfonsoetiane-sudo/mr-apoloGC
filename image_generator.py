@@ -411,4 +411,28 @@ def agregar_watermark(ruta_imagen: str, usar_logo: bool = False):
             try:
                 font = ImageFont.truetype(
                     "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size
-         
+                )
+            except Exception:
+                font = ImageFont.load_default()
+
+            # Color dorado de la marca
+            color_dorado = (201, 168, 76, 210)
+            bbox = draw.textbbox((0, 0), texto, font=font)
+            tw = bbox[2] - bbox[0]
+            th = bbox[3] - bbox[1]
+            margin = int(w * 0.03)
+            tx = w - tw - margin
+            ty = h - th - margin
+
+            # Sombra sutil
+            draw.text((tx + 2, ty + 2), texto, font=font, fill=(0, 0, 0, 160))
+            draw.text((tx, ty), texto, font=font, fill=color_dorado)
+
+            img = Image.alpha_composite(img, overlay)
+            img.convert("RGB").save(ruta_imagen, "PNG")
+            print(f"✅ Watermark @mr.apolo_petfood añadido")
+
+    except Exception as e:
+        print(f"⚠️ No se pudo añadir watermark: {e}")
+
+    return ruta_imagen
