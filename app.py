@@ -145,8 +145,11 @@ def ver_estado(secret: str = ""):
     """Muestra el estado actual del pipeline (posts pendientes)."""
     if secret != os.environ.get("ADMIN_SECRET", "mrapolo2026"):
         raise HTTPException(status_code=401, detail="No autorizado")
-    import json, os
-    if not os.path.exists("estado_pipeline.json"):
+    import sheets_storage
+    estado = sheets_storage.cargar_estado()
+    if not estado:
         return {"status": "Sin pipeline activo hoy"}
     try:
-        with ope
+        return estado
+    except Exception as e:
+        return {"status": "Error leyendo estado", "error": str(e)}
